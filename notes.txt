@@ -1,0 +1,32 @@
+# !!! windows wsl - cannot have spaces in dir names/path !!!!!!!!!
+
+
+# https://github.com/crossplane/provider-template
+# Use this template
+
+
+# !!! when cloning on windows
+git config --global core.autocrlf false
+git clone https://github.com/dhano6/provider-dev-planetscale.git
+# later then turn it back on
+git config --global core.autocrlf true
+
+
+cd provider-dev-planetscale
+
+# get useful upbound utilities
+make submodules
+
+# replace all template names occurencies with name PlanetScale
+make provider.prepare provider=PlanetScale
+
+# add Database Kind under Database group (something like Instance kind under ec2 group)
+make provider.addtype provider=PlanetScale group=Database kind=Database
+
+# add Password Kind under Branch group 
+make provider.addtype provider=PlanetScale group=Branch kind=Password
+
+# register new APIs
+# apis/planetscale.go
+# internal/controller/planetscale.go
+
