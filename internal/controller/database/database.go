@@ -35,6 +35,7 @@ import (
 	"github.com/crossplane/provider-planetscale/apis/database/v1alpha1"
 	apisv1alpha1 "github.com/crossplane/provider-planetscale/apis/v1alpha1"
 	"github.com/crossplane/provider-planetscale/internal/controller/features"
+	"github.com/planetscale/planetscale-go/planetscale"
 )
 
 const (
@@ -46,11 +47,15 @@ const (
 	errNewClient = "cannot create new Service"
 )
 
-// A NoOpService does nothing.
-type NoOpService struct{}
+// A PlanetScaleService does nothing.
+type PlanetScaleService struct{
+	pCLI *planetscale.Client
+}
 
 var (
-	newNoOpService = func(_ []byte) (interface{}, error) { return &NoOpService{}, nil }
+	newPlanetScaleService = func(creds []byte) (interface{}, error) { 
+		c, err := planetscale.NewClient(planetscale.WithAccessToken(string(creds)))
+		return &PlanetScaleService{}, nil }
 )
 
 // Setup adds a controller that reconciles Database managed resources.
@@ -67,7 +72,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithExternalConnecter(&connector{
 			kube:         mgr.GetClient(),
 			usage:        resource.NewProviderConfigUsageTracker(mgr.GetClient(), &apisv1alpha1.ProviderConfigUsage{}),
-			newServiceFn: newNoOpService}),
+			newServiceFn: newPlanetScaleService}),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
 		managed.WithConnectionPublishers(cps...))

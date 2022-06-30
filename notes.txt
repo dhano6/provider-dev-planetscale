@@ -33,3 +33,38 @@ make provider.addtype provider=PlanetScale group=Branch kind=Password
 # generate some functions e.g. deepcopy, managed to satisfy XRM
 make generate
 
+# look up planet scale go-client in internet
+# https://github.com/planetscale/planetscale-go
+
+# put into apis/database/v1alpha1/database_types.go --> DatabaseParameters struct and modify accordingly
+https://github.com/planetscale/planetscale-go/blob/main/planetscale/databases.go
+type CreateDatabaseRequest struct {
+	Organization string
+	Name         string `json:"name"`
+	Notes        string `json:"notes,omitempty"`
+	Region       string `json:"region,omitempty"`
+}
+
+
+# take some of these into DatabaseObservation struct
+type Database struct {
+	Name      string        `json:"name"`
+	Notes     string        `json:"notes"`
+	Region    Region        `json:"region"`
+	State     DatabaseState `json:"state"`
+	HtmlURL   string        `json:"html_url"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+}
+
+
+# internal/controller/database/database.go
+# replace text occurences of NoOpService with PlanetScaleService
+
+# get go client
+go get github.com/planetscale/planetscale-go/planetscale
+
+# install planetscale cli
+# find access token in ~/.config/planetscale
+
+# implement client for external service
