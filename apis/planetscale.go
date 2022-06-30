@@ -20,7 +20,8 @@ package apis
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 
-	samplev1alpha1 "github.com/crossplane/provider-planetscale/apis/sample/v1alpha1"
+	databasev1alpha1 "github.com/crossplane/provider-planetscale/apis/database/v1alpha1"
+	branchv1alpha1 "github.com/crossplane/provider-planetscale/apis/branch/v1alpha1"
 	planetscalev1alpha1 "github.com/crossplane/provider-planetscale/apis/v1alpha1"
 )
 
@@ -28,7 +29,8 @@ func init() {
 	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
 	AddToSchemes = append(AddToSchemes,
 		planetscalev1alpha1.SchemeBuilder.AddToScheme,
-		samplev1alpha1.SchemeBuilder.AddToScheme,
+		databasev1alpha1.SchemeBuilder.AddToScheme,
+		branchv1alpha1.SchemeBuilder.AddToScheme,
 	)
 }
 
