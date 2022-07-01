@@ -64,10 +64,19 @@ spec:
               forProvider:
                 description: DatabaseParameters are the configurable fields of a Database.
                 properties:
-                  configurableField:
+                  notes:
+                    description: Name         string `json:"name"` we will use external
+                      name
+                    type: string
+                  organization:
+                    description: omitempty means optional and also we must change
+                      it into pointer type if its pointer type we can change if its
+                      nil
+                    type: string
+                  region:
                     type: string
                 required:
-                - configurableField
+                - organization
                 type: object
               providerConfigRef:
                 default:
@@ -171,8 +180,10 @@ spec:
               atProvider:
                 description: DatabaseObservation are the observable fields of a Database.
                 properties:
-                  observableField:
+                  state:
                     type: string
+                required:
+                - state
                 type: object
               conditions:
                 description: Conditions of the resource.

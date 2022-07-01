@@ -28,6 +28,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/pkg/connection"
 	"github.com/crossplane/crossplane-runtime/pkg/controller"
 	"github.com/crossplane/crossplane-runtime/pkg/event"
+	"github.com/crossplane/crossplane-runtime/pkg/meta"
 	"github.com/crossplane/crossplane-runtime/pkg/ratelimiter"
 	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
@@ -47,15 +48,17 @@ const (
 	errNewClient = "cannot create new Service"
 )
 
-// A PlanetScaleService does nothing.
+// A 'client' used to connect to the external resource API
 type PlanetScaleService struct{
 	pCLI *planetscale.Client
 }
 
 var (
-	newPlanetScaleService = func(creds []byte) (interface{}, error) { 
+	newPlanetScaleService = func(creds []byte) (*PlanetScaleService, error) { 
 		c, err := planetscale.NewClient(planetscale.WithAccessToken(string(creds)))
-		return &PlanetScaleService{}, nil }
+		return &PlanetScaleService{
+			pCLI: c,
+		}, err }
 )
 
 // Setup adds a controller that reconciles Database managed resources.
@@ -89,7 +92,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 type connector struct {
 	kube         client.Client
 	usage        resource.Tracker
-	newServiceFn func(creds []byte) (interface{}, error)
+	newServiceFn func(creds []byte) (*PlanetScaleService, error)
 }
 
 // Connect typically produces an ExternalClient by:
@@ -131,7 +134,7 @@ func (c *connector) Connect(ctx context.Context, mg resource.Managed) (managed.E
 type external struct {
 	// A 'client' used to connect to the external resource API. In practice this
 	// would be something like an AWS SDK client.
-	service interface{}
+	service *PlanetScaleService
 }
 
 func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.ExternalObservation, error) {
@@ -166,13 +169,29 @@ func (c *external) Create(ctx context.Context, mg resource.Managed) (managed.Ext
 		return managed.ExternalCreation{}, errors.New(errNotDatabase)
 	}
 
-	fmt.Printf("Creating: %+v", cr)
+	notes := ""
+	if cr.Spec.ForProvider.Notes != nil {
+		notes = *cr.Spec.ForProvider.Notes
+	}
+	region := ""
+	if cr.Spec.ForProvider.Region != nil {
+		region = *cr.Spec.ForProvider.Region
+	}
+
+	db, err := c.service.pCLI.Databases.Create(ctx, &planetscale.CreateDatabaseRequest{
+		Organization: cr.Spec.ForProvider.Organization,
+		Name: meta.GetExternalName(cr),
+		Notes: notes,
+		Region: region,
+	})
+
+	cr.Status.AtProvider.State = string(db.State)
 
 	return managed.ExternalCreation{
 		// Optionally return any details that may be required to connect to the
 		// external resource. These will be stored as the connection secret.
 		ConnectionDetails: managed.ConnectionDetails{},
-	}, nil
+	}, err
 }
 
 func (c *external) Update(ctx context.Context, mg resource.Managed) (managed.ExternalUpdate, error) {
