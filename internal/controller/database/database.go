@@ -37,6 +37,9 @@ import (
 	apisv1alpha1 "github.com/crossplane/provider-planetscale/apis/v1alpha1"
 	"github.com/crossplane/provider-planetscale/internal/controller/features"
 	"github.com/planetscale/planetscale-go/planetscale"
+
+	// why
+	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 )
 
 const (
@@ -143,8 +146,20 @@ func (c *external) Observe(ctx context.Context, mg resource.Managed) (managed.Ex
 		return managed.ExternalObservation{}, errors.New(errNotDatabase)
 	}
 
-	// These fmt statements should be removed in the real implementation.
-	fmt.Printf("Observing: %+v", cr)
+	db, err := c.service.pCLI.Databases.Get(ctx, &planetscale.GetDatabaseRequest{
+		Organization: cr.Spec.ForProvider.Organization,
+		Database: meta.GetExternalName(cr),
+	})
+
+	if pErr, ok := err.(*planetscale.Error); ok && pErr.Code == planetscale.ErrNotFound{
+		return managed.ExternalObservation{
+			ResourceExists: false,
+		}, nil
+	}
+
+	if db.State == planetscale.DatabaseReady {
+		cr.Status.SetConditions(xpv1.Available())
+	}
 
 	return managed.ExternalObservation{
 		// Return false when the external resource does not exist. This lets
@@ -215,7 +230,12 @@ func (c *external) Delete(ctx context.Context, mg resource.Managed) error {
 		return errors.New(errNotDatabase)
 	}
 
-	fmt.Printf("Deleting: %+v", cr)
+	// in video c.service.pCLI.Databases.Delete returns only error so he returns result of this function call like:
+	// return c.service.pCLI.Databases.Delete(ctx, &planetscale.DeleteDatabaseRequest{
+	_, err := c.service.pCLI.Databases.Delete(ctx, &planetscale.DeleteDatabaseRequest{
+		Organization: cr.Spec.ForProvider.Organization,
+		Database: meta.GetExternalName(cr),
+	})
 
-	return nil
+	return err
 }

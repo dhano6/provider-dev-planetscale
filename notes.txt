@@ -82,7 +82,12 @@ kubectl apply -f package/crds
 # run controller
 make run
 
-k apply -f pscale-token-secret.yaml
+# how to find token
+	# install pscale cli then:
+	# pscale auth login
+	# cat ~/.config/planetscale/access-token
+
+k apply -f examples/provider/pscale-token-secret.yaml
 
 k apply -f examples/provider/config.yaml
 
