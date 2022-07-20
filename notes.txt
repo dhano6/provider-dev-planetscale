@@ -94,3 +94,14 @@ k apply -f examples/provider/config.yaml
 k apply -f examples/database/database.yaml
 
 k get database
+
+# password api has changed (password_types.go) we must run
+make generate
+kubectl apply -f package/crds
+
+k apply -f examples/database/database.yaml
+k apply -f examples/password/password.yaml
+
+# he took following from https://github.com/crossplane/crossplane-tools
+# and also from go.mod module name
+// +crossplane:generate:reference:type=github.com/crossplane/provider-planetscale/apis/v1alpha1.Database
