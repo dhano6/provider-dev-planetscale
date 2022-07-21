@@ -1,3 +1,5 @@
+# https://github.com/crossplane-contrib/provider-planetscale/tree/db-and-pass
+
 # !!! windows wsl - cannot have spaces in dir names/path !!!!!!!!!
 
 
@@ -105,3 +107,16 @@ k apply -f examples/password/password.yaml
 # he took following from https://github.com/crossplane/crossplane-tools
 # and also from go.mod module name
 // +crossplane:generate:reference:type=github.com/crossplane/provider-planetscale/apis/v1alpha1.Database
+
+
+# if you want to test it in compositions, and run provider locally with make dev, you need to create cluster role binding for crossplane service account like:
+# kubectl create clusterrolebinding crossplane-admin-binding --clusterrole cluster-admin --serviceaccount="crossplane-system:crossplane"
+# if provider planetscale would be installed as package then you would not need to do it
+
+# TODO:
+# NEED TO VERIFY:
+# if resource has external name e.g. db-1 and you create managed resource/claim? with same name - crossplane will not create it it will take it as it is already created and will renconcile and manage this resource 
+
+# tainting in crossplane means delete resource manually and crossplane recreates it automatically
+
+# TODO: he used composition, xrd for db and pass but they are not in repo, either recreate or get them somehow
